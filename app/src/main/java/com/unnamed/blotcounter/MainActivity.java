@@ -1,7 +1,6 @@
 package com.unnamed.blotcounter;
 
 import static android.graphics.Color.BLACK;
-import static android.graphics.Color.GRAY;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -13,7 +12,6 @@ import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -41,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     boolean said;
     boolean scoreSet;
     private LinearLayout scoresDisplayContainer;
-    private boolean updateTerz1;
+    private boolean updateTerz1, kp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         quanshed = false;
         sharped = false;
         scoreSet = false;
+        kp = false;
         said = false;
         quansh.setEnabled(said);
 
@@ -88,8 +87,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         roundScore.setOnClickListener(v -> {
-            if (roundScore.isEnabled()){
+            if (roundScore.isEnabled() && !kp) {
                 setRoundScore(result);
+            } else if (roundScore.isEnabled() && kp) {
+                showKPdialog(result);
             }
         });
 
@@ -219,6 +220,14 @@ public class MainActivity extends AppCompatActivity {
         buttonGroup1.addView(buttonPlus);
         buttonGroup1.addView(buttonMinus);
 
+        CheckBox kp_checkbox = new CheckBox(this);
+        kp_checkbox.setText("Կապույտ");
+        kp_checkbox.setTextColor(BLACK);
+        kp_checkbox.setTextSize(18);
+        kp_checkbox.setGravity(View.TEXT_ALIGNMENT_CENTER);
+        kp_checkbox.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+
+
         // Set default checked button
         buttonPlus.setSelected(true);
         buttonPlus.setBackgroundResource(R.drawable.backgroundstatefirst);
@@ -268,6 +277,14 @@ public class MainActivity extends AppCompatActivity {
         option4.setBackgroundResource(R.drawable.backgroundstatesecond);
         option5.setBackgroundResource(R.drawable.backgroundstatesecond);
 
+        LinearLayout.LayoutParams checkboxParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, // Adjust width as needed
+                LinearLayout.LayoutParams.WRAP_CONTENT  // Adjust height as needed
+        );
+        checkboxParams.gravity = Gravity.CENTER;  // Center the checkbox
+
+        kp_checkbox.setLayoutParams(checkboxParams); // Apply layout parameters
+
         // Create an EditText
         TextView textView = new TextView(this);
         textView.setText("Խոսացած");
@@ -282,13 +299,25 @@ public class MainActivity extends AppCompatActivity {
         editText.setHintTextColor(Color.GRAY);
         editText.setTextColor(Color.BLACK);
 
+        kp_checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                editText.setText("25");
+            } else {
+                editText.setText(""); // Clear or set to a default value if unchecked
+            }
+        });
+
+        layout.setGravity(Gravity.CENTER);
+
         // Add the button groups and edit text to the layout
         layout.addView(buttonGroup1);
         layout.addView(buttonGroup2);
         layout.addView(textView);
         layout.addView(editText);
+        layout.addView(kp_checkbox);
 
         builder.setView(scrollView);
+
 
         // Set up the buttons
         builder.setPositiveButton("OK", null);
@@ -312,11 +341,20 @@ public class MainActivity extends AppCompatActivity {
             String selectedOption1 = selectedButton1.getText().toString();
             String selectedOption2 = selectedButton2.getText().toString();
             String inputText = editText.getText().toString();
-            if (!inputText.isEmpty()){
-                if (Integer.parseInt(inputText) < 8) {
+
+            if (inputText.isEmpty()) {
+                Toast.makeText(this, "Please enter a number", Toast.LENGTH_SHORT).show();
+            } else {
+                int inputValue = Integer.parseInt(inputText);
+
+                if (kp_checkbox.isChecked() && inputValue < 25) {
+                    Toast.makeText(this, "Կապույտի համար 25 կամ ավել", Toast.LENGTH_LONG).show();
+                    kp_checkbox.setChecked(false);
+                    kp = false;
+                } else if (inputValue < 8) {
                     Toast.makeText(this, "Invalid input", Toast.LENGTH_SHORT).show();
                 } else {
-                    roundNumberInt = Integer.parseInt(inputText);
+                    roundNumberInt = inputValue;
 
                     result = selectedOption1 + " " + selectedOption2 + " " + inputText;
                     roundNumber.setEnabled(false);
@@ -330,12 +368,13 @@ public class MainActivity extends AppCompatActivity {
                     textView1.setEnabled(true);
                     textView4.setEnabled(true);
                     System.out.println(roundScore.isEnabled());
+                    kp = kp_checkbox.isChecked();
+
+                    quansh.setEnabled(true);
 
                     addScorePair(result);
                     dialog.dismiss();
                 }
-            }else{
-                System.out.println("You need to type number.");
             }
         }));
 
@@ -544,14 +583,6 @@ public class MainActivity extends AppCompatActivity {
                     roundScore.setText(String.valueOf(enteredNumber)); // Update roundScore with entered number
 
                     int z = roundTerz1 + roundTerz2;
-                    boolean kp = false;
-
-                    if (enteredNumber == 162){
-                        enteredNumber = 250;
-                        kp = true;
-                    } else {
-                        kp = false;
-                    }
 
                     if (firstChar == '+') {
                         if (enteredNumber + (roundTerz1 * 10) < roundNumberInt * 10) {
@@ -564,12 +595,10 @@ public class MainActivity extends AppCompatActivity {
                             }
                         } else {
                             int roundedNumber = roundUp(enteredNumber);
-                            if (quanshed && !sharped) {
+                            if (quanshed) {
                                 totalTeam1 += (2 * roundNumberInt) + 16 + z;
-                            } else if (quanshed && sharped) {
+                            } else if (sharped) {
                                 totalTeam1 += (4 * roundNumberInt) + 16 + z;
-                            } else if (kp) {
-                                totalTeam1 += 25 + roundTerz1 + roundNumberInt;
                             } else {
                                 totalTeam1 += roundedNumber + roundNumberInt + roundTerz1;
                                 totalTeam2 += roundTerz2 + (16 - roundedNumber);
@@ -577,21 +606,19 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else {
                         if (enteredNumber + (roundTerz2 * 10) < roundNumberInt * 10) {
-                            if (quanshed && !sharped) {
+                            if (quanshed) {
                                 totalTeam1 += (2 * roundNumberInt) + 16 + z;
-                            } else if (quanshed && sharped) {
+                            } else if (sharped) {
                                 totalTeam1 += (4 * roundNumberInt) + 16 + z;
                             } else {
                                 totalTeam1 += 16 + roundNumberInt + z;
                             }
                         } else {
                             int roundedNumber = roundUp(enteredNumber);
-                            if (quanshed && !sharped) {
+                            if (quanshed) {
                                 totalTeam2 += (2 * roundNumberInt) + 16 + z;
-                            } else if (quanshed && sharped) {
+                            } else if (sharped) {
                                 totalTeam2 += (4 * roundNumberInt) + 16 + z;
-                            } else if (kp) {
-                                totalTeam2 += 25 + roundTerz2 + roundNumberInt;
                             } else {
                                 totalTeam2 += roundedNumber + roundNumberInt + roundTerz2;
                                 totalTeam1 += roundTerz1 + (16 - roundedNumber);
@@ -616,6 +643,7 @@ public class MainActivity extends AppCompatActivity {
                     roundScore.setEnabled(false);
                     roundScore.setClickable(false);
                     roundScore.setFocusable(false);
+                    quansh.setEnabled(false);
                     editText.setEnabled(false);
                     textView4.setEnabled(false);
                     textView1.setEnabled(false);
@@ -749,5 +777,92 @@ public class MainActivity extends AppCompatActivity {
                 return a / b;
         }
         return 0;
+    }
+
+    @SuppressLint("ResourceAsColor")
+    private void showKPdialog(String result) {
+        // Create a linear layout to hold the checkbox
+        final char firstChar = result.charAt(0);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER); // Center the contents horizontally and vertically
+
+        // Create and configure the checkbox
+        CheckBox kp_bool = new CheckBox(this);
+        kp_bool.setText("Կապույտ");
+        kp_bool.setTextColor(Color.BLACK);
+        kp_bool.setTextSize(24);
+
+        LinearLayout.LayoutParams checkboxParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, // Adjust width as needed
+                LinearLayout.LayoutParams.WRAP_CONTENT  // Adjust height as needed
+        );
+        checkboxParams.gravity = Gravity.CENTER;  // Center the checkbox
+
+        kp_bool.setLayoutParams(checkboxParams);
+        // Add the checkbox to the layout
+        layout.addView(kp_bool);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(layout);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            if (firstChar == '+') {
+                if (kp && kp_bool.isChecked()) {
+                    if (quanshed) {
+                        totalTeam1 += 16 + (roundNumberInt * 2) + roundTerz1;
+                    } else if (sharped) {
+                        totalTeam1 += 16 + (roundNumberInt * 4) + roundTerz1;
+                    } else {
+                        totalTeam1 += 25 + roundNumberInt + roundTerz1;
+                    }
+                } else if (kp && !kp_bool.isChecked()) {
+                    if (quanshed) {
+                        totalTeam2 += 16 + (roundNumberInt * 2) + roundTerz2 + roundTerz1;
+                    } else if (sharped) {
+                        totalTeam2 += 16 + (roundNumberInt * 4) + roundTerz2 + roundTerz1;
+                    } else {
+                        totalTeam2 += roundNumberInt + 16 + roundTerz1 + roundTerz2;
+                    }
+                }
+            } else {
+                if (kp && kp_bool.isChecked()) {
+                    if (quanshed) {
+                        totalTeam2 += 25 + (roundNumberInt * 2) + roundTerz2;
+                    } else if (sharped) {
+                        totalTeam2 += 25 + (roundNumberInt * 4) + roundTerz2;
+                    } else {
+                        totalTeam2 += 25 + roundNumberInt + roundTerz2;
+                    }
+                } else if (kp && !kp_bool.isChecked()) {
+                    if (quanshed) {
+                        totalTeam1 += 16 + (roundNumberInt * 2) + roundTerz2 + roundTerz1;
+                    } else if (sharped) {
+                        totalTeam1 += 16 + (roundNumberInt * 4) + roundTerz2 + roundTerz1;
+                    } else {
+                        totalTeam1 += roundNumberInt + 16 + roundTerz1 + roundTerz2;
+                    }
+                }
+            }
+
+            you.setText(String.valueOf(totalTeam2));
+            we.setText(String.valueOf(totalTeam1));
+
+            quanshed = false;
+            sharped = false;
+            quansh.setEnabled(false);
+            roundScore.setEnabled(false);
+            roundScore.setClickable(false);
+            roundScore.setFocusable(false);
+            textView4.setEnabled(false);
+            textView1.setEnabled(false);
+            roundNumber.setEnabled(true);
+        });
+
+        // Create and show the dialog
+        AlertDialog dialog = builder.create();
+        dialog.getWindow().setBackgroundDrawableResource(R.color.white);
+        dialog.show();
     }
 }
