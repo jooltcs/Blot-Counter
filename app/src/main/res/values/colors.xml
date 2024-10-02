@@ -9,4 +9,6 @@
     <color name="colorSecondaryText">#757575</color>
     <color name="colorDivider">#BDBDBD</color>
     <color name="bgColor">#478CCF</color>
+    <color name="myRed">#FF0000</color>
+    <color name="myBlue">#0000FF</color>
 </resources>

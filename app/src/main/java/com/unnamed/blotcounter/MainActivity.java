@@ -1,6 +1,8 @@
 package com.unnamed.blotcounter;
 
 import static android.graphics.Color.BLACK;
+import static android.graphics.Color.BLUE;
+import static android.graphics.Color.RED;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -20,11 +22,15 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.ComponentActivity;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import java.util.Stack;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -40,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     boolean scoreSet;
     private LinearLayout scoresDisplayContainer;
     private boolean updateTerz1, kp;
+
+    private int secondsPassed = 0;
+    private static Timer timer = new Timer();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
         kp = false;
         said = false;
         quansh.setEnabled(said);
+
+        startTimer();
 
 
         textView1.setOnClickListener(v -> {
@@ -227,11 +238,6 @@ public class MainActivity extends AppCompatActivity {
         kp_checkbox.setGravity(View.TEXT_ALIGNMENT_CENTER);
         kp_checkbox.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
-
-        // Set default checked button
-        buttonPlus.setSelected(true);
-        buttonPlus.setBackgroundResource(R.drawable.backgroundstatefirst);
-
         // Create buttons for the second group
         LinearLayout buttonGroup2 = new LinearLayout(this);
         buttonGroup2.setOrientation(LinearLayout.HORIZONTAL);
@@ -260,6 +266,7 @@ public class MainActivity extends AppCompatActivity {
         option4.setLayoutParams(buttonParams);
         Button option5 = new Button(this);
         option5.setText("X");
+        option5.setTextColor(BLACK);
         option5.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24); // Set text size to 24dp
         option5.setLayoutParams(buttonParams);
 
@@ -269,8 +276,8 @@ public class MainActivity extends AppCompatActivity {
         buttonGroup2.addView(option4);
         buttonGroup2.addView(option5);
 
-        option1.setSelected(true); // Set first option checked by default
-        option1.setBackgroundResource(R.drawable.backgroundstatefirst);
+        option1.setBackgroundResource(R.drawable.backgroundstatesecond);
+        buttonPlus.setBackgroundResource(R.drawable.backgroundstatesecond);
         buttonMinus.setBackgroundResource(R.drawable.backgroundstatesecond);
         option2.setBackgroundResource(R.drawable.backgroundstatesecond);
         option3.setBackgroundResource(R.drawable.backgroundstatesecond);
@@ -297,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
         editText.setGravity(Gravity.CENTER);
         editText.setInputType(InputType.TYPE_CLASS_NUMBER);
         editText.setHintTextColor(Color.GRAY);
-        editText.setTextColor(Color.BLACK);
+        editText.setTextColor(BLACK);
 
         kp_checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -330,55 +337,72 @@ public class MainActivity extends AppCompatActivity {
             roundScore.setEnabled(false);
         });
         AlertDialog dialog = builder.create();
-        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
-            Button selectedButton1 = buttonPlus.isSelected() ? buttonPlus : buttonMinus;
-            Button selectedButton2 = option1.isSelected() ? option1 :
-                    option2.isSelected() ? option2 :
-                            option3.isSelected() ? option3 :
-                                    option4.isSelected() ? option4 :
-                                            option5;
+        dialog.setOnShowListener(dialogInterface -> {
+            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveButton.setOnClickListener(view -> {
+                Button selectedButton1 = buttonPlus.isSelected() ? buttonPlus : buttonMinus;
+                Button selectedButton2 = option1.isSelected() ? option1 :
+                        option2.isSelected() ? option2 :
+                                option3.isSelected() ? option3 :
+                                        option4.isSelected() ? option4 :
+                                                option5;
 
-            String selectedOption1 = selectedButton1.getText().toString();
-            String selectedOption2 = selectedButton2.getText().toString();
-            String inputText = editText.getText().toString();
+                String selectedOption1 = selectedButton1.getText().toString();
+                String selectedOption2 = selectedButton2.getText().toString();
+                String inputText = editText.getText().toString();
 
-            if (inputText.isEmpty()) {
-                Toast.makeText(this, "Please enter a number", Toast.LENGTH_SHORT).show();
-            } else {
-                int inputValue = Integer.parseInt(inputText);
-
-                if (kp_checkbox.isChecked() && inputValue < 25) {
-                    Toast.makeText(this, "Կապույտի համար 25 կամ ավել", Toast.LENGTH_LONG).show();
-                    kp_checkbox.setChecked(false);
-                    kp = false;
-                } else if (inputValue < 8) {
-                    Toast.makeText(this, "Invalid input", Toast.LENGTH_SHORT).show();
+                if (inputText.isEmpty() || !selectedButton1.isSelected() || !selectedButton2.isSelected()) {
+                    Toast.makeText(this, "Please enter a valid inputs", Toast.LENGTH_SHORT).show();
                 } else {
-                    roundNumberInt = inputValue;
+                    int inputValue = Integer.parseInt(inputText);
 
-                    result = selectedOption1 + " " + selectedOption2 + " " + inputText;
-                    roundNumber.setEnabled(false);
+                    if (kp_checkbox.isChecked() && inputValue < 25) {
+                        Toast.makeText(this, "Կապույտի համար 25 կամ ավել", Toast.LENGTH_LONG).show();
+                        kp_checkbox.setChecked(false);
+                        kp = false;
+                    } else if (inputValue < 8) {
+                        Toast.makeText(this, "Invalid input", Toast.LENGTH_SHORT).show();
+                    } else {
+                        roundNumberInt = inputValue;
 
-                    quansh.setEnabled(true);
-                    roundScore.setEnabled(true);
-                    roundScore.setClickable(true);
-                    roundScore.setFocusable(true);
-                    roundTerz1 = 0;
-                    roundTerz2 = 0;
-                    textView1.setEnabled(true);
-                    textView4.setEnabled(true);
-                    System.out.println(roundScore.isEnabled());
-                    kp = kp_checkbox.isChecked();
+                        result = selectedOption1 + " " + selectedOption2 + " " + inputText;
+                        roundNumber.setEnabled(false);
 
-                    quansh.setEnabled(true);
+                        quansh.setEnabled(true);
+                        roundScore.setEnabled(true);
+                        roundScore.setClickable(true);
+                        roundScore.setFocusable(true);
+                        roundTerz1 = 0;
+                        roundTerz2 = 0;
+                        textView1.setEnabled(true);
+                        textView4.setEnabled(true);
+                        System.out.println(roundScore.isEnabled());
+                        kp = kp_checkbox.isChecked();
 
-                    addScorePair(result);
-                    dialog.dismiss();
+                        quansh.setEnabled(true);
+
+                        addScorePair(result);
+                        dialog.dismiss();
+                    }
                 }
-            }
-        }));
+            });
 
-        // Add click listeners to toggle the button states
+            // Set the text color of the dialog buttons
+            positiveButton.setTextColor(getResources().getColor(R.color.black));
+            positiveButton.setBackgroundResource(R.drawable.button_border);
+            positiveButton.setBackgroundColor(R.drawable.button_border);
+            Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            negativeButton.setTextColor(getResources().getColor(R.color.black));
+            negativeButton.setBackgroundResource(R.drawable.button_border);
+
+            positiveButton.setBackgroundResource(R.drawable.button_border);
+            negativeButton.setBackgroundResource(R.drawable.button_border);
+        });
+
+        dialog.getWindow().setBackgroundDrawableResource(R.color.white);
+        dialog.show();
+
+// Add click listeners to toggle the button states
         buttonPlus.setOnClickListener(view -> {
             buttonPlus.setSelected(true);
             buttonPlus.setBackgroundResource(R.drawable.backgroundstatefirst);
@@ -457,9 +481,6 @@ public class MainActivity extends AppCompatActivity {
             option5.setSelected(true);
             option5.setBackgroundResource(R.drawable.backgroundstatefirst);
         });
-        said = true;
-        dialog.getWindow().setBackgroundDrawableResource(R.color.white);
-        dialog.show();
     }
 
 
@@ -577,10 +598,18 @@ public class MainActivity extends AppCompatActivity {
                 quansh.setEnabled(said);
 
                 try {
-                    // Evaluate the entered expression manually
                     int enteredNumber = evaluateExpression(enteredText);
 
-                    roundScore.setText(String.valueOf(enteredNumber)); // Update roundScore with entered number
+                    if (enteredNumber == 162) {
+                        enteredNumber = 250;
+                    }
+
+                    roundScore.setText(String.valueOf(enteredNumber));
+                    int roundedNumber = roundUp(enteredNumber);
+
+                    if (roundedNumber < 0) {
+                        roundedNumber = 0;
+                    }
 
                     int z = roundTerz1 + roundTerz2;
 
@@ -594,14 +623,13 @@ public class MainActivity extends AppCompatActivity {
                                 totalTeam2 += 16 + roundNumberInt + z;
                             }
                         } else {
-                            int roundedNumber = roundUp(enteredNumber);
                             if (quanshed) {
                                 totalTeam1 += (2 * roundNumberInt) + 16 + z;
                             } else if (sharped) {
                                 totalTeam1 += (4 * roundNumberInt) + 16 + z;
                             } else {
-                                totalTeam1 += roundedNumber + roundNumberInt + roundTerz1;
-                                totalTeam2 += roundTerz2 + (16 - roundedNumber);
+                                totalTeam1 += (enteredNumber == 250 ? 25 : roundedNumber) + roundNumberInt + roundTerz1;
+                                totalTeam2 += roundTerz2 + Math.max(0, 16 - roundedNumber);
                             }
                         }
                     } else {
@@ -614,18 +642,18 @@ public class MainActivity extends AppCompatActivity {
                                 totalTeam1 += 16 + roundNumberInt + z;
                             }
                         } else {
-                            int roundedNumber = roundUp(enteredNumber);
                             if (quanshed) {
                                 totalTeam2 += (2 * roundNumberInt) + 16 + z;
                             } else if (sharped) {
                                 totalTeam2 += (4 * roundNumberInt) + 16 + z;
                             } else {
-                                totalTeam2 += roundedNumber + roundNumberInt + roundTerz2;
-                                totalTeam1 += roundTerz1 + (16 - roundedNumber);
+                                totalTeam2 += (enteredNumber == 250 ? 25 : roundedNumber) + roundNumberInt + roundTerz2;
+                                totalTeam1 += roundTerz1 + Math.max(0, 16 - roundedNumber);
                             }
                         }
                     }
 
+                    // Update the UI for team scores
                     you.setText(String.valueOf(totalTeam2));
                     we.setText(String.valueOf(totalTeam1));
 
@@ -639,7 +667,7 @@ public class MainActivity extends AppCompatActivity {
                         gameOver(2);
                     }
 
-                    // Disable roundScore and EditText after processing
+                    // Disable UI elements after processing
                     roundScore.setEnabled(false);
                     roundScore.setClickable(false);
                     roundScore.setFocusable(false);
@@ -667,11 +695,37 @@ public class MainActivity extends AppCompatActivity {
         return (int) Math.ceil(numberAfter);
     }
 
+    private void startTimer() {
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                secondsPassed++;
+            }
+        };
+        // Start the timer and schedule the task to run every 1000 milliseconds (1 second)
+        timer.scheduleAtFixedRate(task, 0, 1000);
+    }
+
+    // Call this method to stop the timer
+    private void stopTimer() {
+        timer.cancel();
+    }
+
+    // Modify gameOver method to display time
     private void gameOver(int team) {
+        stopTimer();  // Stop the timer when the game is over
+
+        int hours = secondsPassed / 3600;
+        int minutes = (secondsPassed % 3600) / 60;
+        int seconds = (secondsPassed % 60);
+
+        String timeElapsed = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Team " + team + " wins!");
-        builder.setMessage("Start over?");
+        builder.setMessage("Time Elapsed: " + timeElapsed + "\nStart over?");
         builder.setPositiveButton("OK", (dialog, which) -> {
+            // Reset timer and go to StartActivity
             Intent intent = new Intent(MainActivity.this, StartActivity.class);
             startActivity(intent);
             dialog.dismiss();
@@ -685,7 +739,7 @@ public class MainActivity extends AppCompatActivity {
         // Customize TextView if needed
         TextView textView = dialog.findViewById(android.R.id.message);
         if (textView != null) {
-            textView.setTextSize(18); // Example of customizing text size
+            textView.setTextSize(18);  // Example of customizing text size
         }
     }
 
@@ -790,7 +844,7 @@ public class MainActivity extends AppCompatActivity {
         // Create and configure the checkbox
         CheckBox kp_bool = new CheckBox(this);
         kp_bool.setText("Կապույտ");
-        kp_bool.setTextColor(Color.BLACK);
+        kp_bool.setTextColor(BLACK);
         kp_bool.setTextSize(24);
 
         LinearLayout.LayoutParams checkboxParams = new LinearLayout.LayoutParams(
@@ -816,6 +870,7 @@ public class MainActivity extends AppCompatActivity {
                         totalTeam1 += 16 + (roundNumberInt * 4) + roundTerz1;
                     } else {
                         totalTeam1 += 25 + roundNumberInt + roundTerz1;
+                        totalTeam2 += roundTerz2;
                     }
                 } else if (kp && !kp_bool.isChecked()) {
                     if (quanshed) {
@@ -834,6 +889,7 @@ public class MainActivity extends AppCompatActivity {
                         totalTeam2 += 25 + (roundNumberInt * 4) + roundTerz2;
                     } else {
                         totalTeam2 += 25 + roundNumberInt + roundTerz2;
+                        totalTeam1 += roundTerz1;
                     }
                 } else if (kp && !kp_bool.isChecked()) {
                     if (quanshed) {

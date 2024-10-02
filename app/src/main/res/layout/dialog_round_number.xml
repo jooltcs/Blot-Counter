@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Button Group 1 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="20dp">
+
+            <Button
+                android:id="@+id/buttonPlus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+"
+                android:textSize="24sp"
+                android:background="@drawable/backgroundstatefirst"/>
+
+            <Button
+                android:id="@+id/buttonMinus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+                android:textSize="24sp"
+                android:background="@drawable/backgroundstatesecond"/>
+
+        </LinearLayout>
+
+        <!-- Checkbox -->
+        <CheckBox
+            android:id="@+id/kp_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Կապույտ"
+            android:textSize="18sp"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- EditText and TextView -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Խոսացած"
+            android:textSize="24sp"
+            android:textAlignment="center"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="Enter value"
+            android:textColorHint="@android:color/darker_gray"
+            android:textColor="@android:color/black"/>
+
+        <!-- Button Group 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="20dp">
+
+            <Button
+                android:id="@+id/option1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="♥️"
+                android:textSize="24sp"
+                android:background="@drawable/backgroundstatesecond"/>
+
+            <Button
+                android:id="@+id/option2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="♦️"
+                android:textSize="24sp"
+                android:background="@drawable/backgroundstatesecond"/>
+
+            <Button
+                android:id="@+id/option3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="♣️"
+                android:textSize="24sp"
+                android:background="@drawable/backgroundstatesecond"/>
+
+            <Button
+                android:id="@+id/option4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="♠️"
+                android:textSize="24sp"
+                android:background="@drawable/backgroundstatesecond"/>
+
+            <Button
+                android:id="@+id/option5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="X"
+                android:textSize="24sp"
+                android:background="@drawable/backgroundstatesecond"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
