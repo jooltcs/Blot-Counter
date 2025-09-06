@@ -12,15 +12,19 @@ To install and run the Blot Counter, follow these steps:
 Clone the repository:
 
 git clone https://github.com/gingerbreadic/blot-counter.git
+
 Navigate to the project directory:
 
 cd blot-scoring-saver
+
 Install the necessary dependencies:
 
 npm install
+
 Run the application:
 
 Usage
+
 Open the Blot Counter.
 Enter the scores as you play the game.
 Save the game state when you're done or at any point during the game.
