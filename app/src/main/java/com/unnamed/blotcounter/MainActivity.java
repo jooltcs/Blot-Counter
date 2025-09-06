@@ -3,6 +3,8 @@ package com.unnamed.blotcounter;
 import static android.graphics.Color.BLACK;
 import static android.graphics.Color.BLUE;
 import static android.graphics.Color.RED;
+import static android.view.View.INVISIBLE;
+import static android.view.View.VISIBLE;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -14,6 +16,7 @@ import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -36,7 +39,7 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity {
 
     TextView textView1, textView4;
-    TextView roundNumber, roundScore, terz1, terz2, we, you, quansh;
+    TextView roundNumber, roundScore, roundScoreRed, terz1, terz2, we, you, quansh;
     int roundTerz1, roundTerz2, roundNumberInt;
     String result;
     TextView roundTextView;
@@ -50,21 +53,25 @@ public class MainActivity extends AppCompatActivity {
     private int secondsPassed = 0;
     private static Timer timer = new Timer();
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         scoresDisplayContainer = findViewById(R.id.scoresDisplayContainer);
         textView1 = findViewById(R.id.textView1);
         textView4 = findViewById(R.id.textView4);
         roundNumber = findViewById(R.id.roundNumber);
         roundScore = findViewById(R.id.roundScore);
+        roundScoreRed = findViewById(R.id.roundScoreRed);
         quansh = findViewById(R.id.quansh);
         textView1.setEnabled(false);
         roundScore.setEnabled(false);
         textView4.setEnabled(false);
+        roundScore.setZ(1000);
+        roundScoreRed.setZ(1001);
         roundTerz1 = 0;
         roundTerz2 = 0;
         totalTeam2 = 0;
@@ -75,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         kp = false;
         said = false;
         quansh.setEnabled(said);
+        roundNumber.setTextColor(RED);
 
         startTimer();
 
@@ -90,14 +98,13 @@ public class MainActivity extends AppCompatActivity {
         textView4.setOnClickListener(v -> {
             updateTerz1 = false; // Update terz2
             showAlertDialog();
-
         });
 
         roundNumber.setOnClickListener(v -> {
             setRoundNumber();
         });
 
-        roundScore.setOnClickListener(v -> {
+        roundScoreRed.setOnClickListener(v -> {
             if (roundScore.isEnabled() && !kp) {
                 setRoundScore(result);
             } else if (roundScore.isEnabled() && kp) {
@@ -325,17 +332,25 @@ public class MainActivity extends AppCompatActivity {
 
         builder.setView(scrollView);
 
-
-        // Set up the buttons
-        builder.setPositiveButton("OK", null);
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            roundNumber.setTextColor(BLACK);
+            roundNumber.setEnabled(false);
+            roundNumber.setClickable(false);
+            roundScoreRed.setVisibility(VISIBLE);
+            textView1.setTextColor(RED);
+            textView1.setEnabled(true);
+            textView1.setClickable(true);
+            textView4.setTextColor(RED);
+            textView4.setEnabled(true);
+            textView4.setClickable(true);
+            quansh.setEnabled(true);
+            quansh.setClickable(true);
+        });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> {
             dialog.cancel();
-            roundNumber.setEnabled(true);
-            textView1.setEnabled(false);
-            textView4.setEnabled(false);
-            roundScore.setEnabled(false);
         });
+
         AlertDialog dialog = builder.create();
         dialog.setOnShowListener(dialogInterface -> {
             Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
@@ -369,9 +384,10 @@ public class MainActivity extends AppCompatActivity {
                         roundNumber.setEnabled(false);
 
                         quansh.setEnabled(true);
-                        roundScore.setEnabled(true);
-                        roundScore.setClickable(true);
-                        roundScore.setFocusable(true);
+                        roundScoreRed.setVisibility(VISIBLE);
+                        textView1.setTextColor(RED);
+                        textView4.setTextColor(RED);
+                        roundNumber.setTextColor(BLACK);
                         roundTerz1 = 0;
                         roundTerz2 = 0;
                         textView1.setEnabled(true);
@@ -555,7 +571,7 @@ public class MainActivity extends AppCompatActivity {
         roundScore = new TextView(this);
         roundScore.setText(String.valueOf(0));
         roundScore.setTextSize(24);
-        roundScore.setTextColor(BLACK);
+        roundScore.setVisibility(VISIBLE);
         roundScore.setLayoutParams(new LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -579,23 +595,28 @@ public class MainActivity extends AppCompatActivity {
     public void setRoundScore(String result) {
         final char firstChar = result.charAt(0);
         final EditText editText = new EditText(MainActivity.this);
-        editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_TEXT); // Allow numbers and text
-        editText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER); // Center alignment
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_TEXT);
+        editText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
-        // Create the alert dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setView(editText);
 
-        // Set up the buttons
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            String enteredText = editText.getText().toString().trim();
-            if (!enteredText.isEmpty()) {
-                quansh.setText("քուանշ");
-                quansh.setBackgroundResource(R.drawable.border);
-                roundNumber.setEnabled(true);
-                scoreSet = true;
-                said = false;
-                quansh.setEnabled(said);
+        builder.setPositiveButton("OK", null); // override later
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            // 🔹 Do NOT disable anything here, just dismiss
+            dialog.dismiss();
+        });
+
+        AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(d -> {
+            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveButton.setOnClickListener( v -> {
+                String enteredText = editText.getText().toString().trim();
+                if (enteredText.isEmpty()) {
+                    Toast.makeText(MainActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 try {
                     int enteredNumber = evaluateExpression(enteredText);
@@ -606,13 +627,11 @@ public class MainActivity extends AppCompatActivity {
 
                     roundScore.setText(String.valueOf(enteredNumber));
                     int roundedNumber = roundUp(enteredNumber);
-
-                    if (roundedNumber < 0) {
-                        roundedNumber = 0;
-                    }
+                    if (roundedNumber < 0) roundedNumber = 0;
 
                     int z = roundTerz1 + roundTerz2;
 
+                    // Apply scoring rules
                     if (firstChar == '+') {
                         if (enteredNumber + (roundTerz1 * 10) < roundNumberInt * 10) {
                             if (quanshed) {
@@ -653,40 +672,49 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    // Update the UI for team scores
+                    // Update team scores
                     you.setText(String.valueOf(totalTeam2));
                     we.setText(String.valueOf(totalTeam1));
 
                     quanshed = false;
                     sharped = false;
 
-                    if (totalTeam1 >= 301) {
-                        gameOver(1);
-                    }
-                    if (totalTeam2 >= 301) {
-                        gameOver(2);
-                    }
+                    if (totalTeam1 >= 301) gameOver(1);
+                    if (totalTeam2 >= 301) gameOver(2);
 
-                    // Disable UI elements after processing
-                    roundScore.setEnabled(false);
-                    roundScore.setClickable(false);
-                    roundScore.setFocusable(false);
-                    quansh.setEnabled(false);
-                    editText.setEnabled(false);
-                    textView4.setEnabled(false);
+                    roundScore.setVisibility(VISIBLE);
+                    roundScoreRed.setVisibility(INVISIBLE);
+
+                    roundNumber.setTextColor(Color.RED);
+                    roundNumber.setEnabled(true);
+                    roundNumber.setClickable(true);
+
+                    textView1.setTextColor(Color.BLACK);
                     textView1.setEnabled(false);
+                    textView1.setClickable(false);
 
+                    textView4.setTextColor(Color.BLACK);
+                    textView4.setEnabled(false);
+                    textView4.setClickable(false);
+
+                    quansh.setEnabled(false);
+                    quansh.setClickable(false);
+
+                    editText.setEnabled(false);
+
+                    dialog.dismiss();
                 } catch (NumberFormatException e) {
                     Toast.makeText(MainActivity.this, "Please enter a valid number or expression", Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Toast.makeText(MainActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
-            }
+            });
         });
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        dialog.setOnDismissListener(d -> {
+            // Only enforce disabled state after OK, not Cancel
+            // (handled above)
+        });
 
-        builder.show();
+        dialog.show();
     }
 
 
@@ -907,13 +935,18 @@ public class MainActivity extends AppCompatActivity {
 
             quanshed = false;
             sharped = false;
-            quansh.setEnabled(false);
-            roundScore.setEnabled(false);
-            roundScore.setClickable(false);
-            roundScore.setFocusable(false);
-            textView4.setEnabled(false);
-            textView1.setEnabled(false);
+            roundNumber.setTextColor(RED);
             roundNumber.setEnabled(true);
+            roundNumber.setClickable(true);
+            roundScore.setVisibility(VISIBLE);
+            textView1.setTextColor(BLACK);
+            textView1.setEnabled(false);
+            textView1.setClickable(false);
+            textView4.setTextColor(BLACK);
+            textView4.setEnabled(false);
+            textView4.setClickable(false);
+            quansh.setEnabled(false);
+            quansh.setClickable(false);
         });
 
         // Create and show the dialog
